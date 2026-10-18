@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ Java 勇者試煉：期中地下城</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --code-bg: #090d16;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* 頂部導覽與進度條 */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .progress-wrapper {
+      flex: 1;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-bar-bg {
+      flex: 1;
+      height: 12px;
+      background: #334155;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* 勇者登錄卡片 */
+    .hero-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.15);
+    }
+
+    .hero-card h2 {
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* 關卡標題 */
+    .stage-header {
+      margin: 40px 0 20px;
+      padding: 16px 20px;
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+    }
+
+    .stage-header h3 {
+      font-size: 1.3rem;
+      color: var(--accent);
+    }
+
+    .stage-header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 題目卡片 */
+    .question-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s ease;
+    }
+
+    .question-card.answered {
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .q-badge {
+      background: #334155;
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .q-type {
+      font-size: 0.8rem;
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.12);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .q-title {
+      font-size: 1.08rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    /* 程式碼區塊 */
+    pre.code-block {
+      background: var(--code-bg);
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.95rem;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    .code-line {
+      display: block;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* 互動元件：單選卡片 */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .option-label:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--accent);
+    }
+
+    .option-label input[type="radio"] {
+      accent-color: var(--accent);
+      transform: scale(1.2);
+    }
+
+    /* 互動元件：程式碼內嵌下拉選單 */
+    select.inline-select {
+      background: #1e293b;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* 互動元件：點擊排序題 */
+    .sort-pool, .sort-target {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px;
+      background: var(--code-bg);
+      border: 1px dashed var(--card-border);
+      border-radius: 10px;
+      min-height: 58px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .sort-btn {
+      padding: 8px 14px;
+      background: #1e293b;
+      border: 1px solid var(--accent);
+      color: var(--text-main);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: transform 0.1s;
+    }
+
+    .sort-btn:hover {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid var(--text-muted);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* 互動元件：配對表格 */
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .match-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 互動元件：陣列置物櫃視覺化 */
+    .locker-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 4px;
+      margin-bottom: 16px;
+    }
+
+    .locker {
+      flex: 1;
+      min-width: 80px;
+      background: var(--code-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .locker-index {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .locker-val {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--warning);
+      font-family: monospace;
+    }
+
+    /* 底部交卷區 */
+    .submit-section {
+      background: var(--card-bg);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .btn-export {
+      background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.35);
+      transition: transform 0.15s ease;
+      margin: 10px;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-2px);
+    }
+
+    .preview-box {
+      margin-top: 20px;
+      text-align: left;
+      display: none;
+    }
+
+    .preview-box textarea {
+      width: 100%;
+      height: 180px;
+      background: var(--code-bg);
+      color: var(--success);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">☕ Java 勇者試煉：期中地下城</div>
+    <div class="progress-wrapper">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">完成度 0 / 20</div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 學生基本資料 -->
+    <div class="hero-card">
+      <h2>🛡️ 勇者登錄證（請務必正確填寫）</h2>
+      <div class="info-grid">
+        <div class="input-group">
+          <label for="studentId">學號 (Student ID) *</label>
+          <input type="text" id="studentId" placeholder="例如：11200101" oninput="saveProgress()">
+        </div>
+        <div class="input-group">
+          <label for="studentName">姓名 (Name) *</label>
+          <input type="text" id="studentName" placeholder="請輸入真實姓名" oninput="saveProgress()">
+        </div>
+        <div class="input-group">
+          <label for="studentClass">班級 / 組別</label>
+          <input type="text" id="studentClass" placeholder="例如：智產一甲" oninput="saveProgress()">
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 第一關 ==================== -->
+    <div class="stage-header">
+      <h3>🏰 第一關：新手村的召喚（Java 介紹與第一支程式）</h3>
+      <p>通過試煉條件：掌握 Java 特色、執行流程與標準輸出語法（每題 5 分）</p>
+    </div>
+
+    <!-- Q1 排序題 -->
+    <div class="question-card" id="card-Q1">
+      <div class="q-header">
+        <span class="q-badge">第 1 題 (Q1)</span>
+        <span class="q-type">🧩 魔法詠唱順序題</span>
+      </div>
+      <div class="q-title">Java 程式從撰寫原始碼到在電腦上跑起來，會依序經過哪四個階段？請依序點擊下方按鈕完成排列：</div>
+      <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">👇 點擊下方卡片加入序列：</div>
+      <div class="sort-pool" id="q1-pool">
+        <button type="button" class="sort-btn" data-code="1" onclick="addSortItem('Q1', '1', '1. 產生 .class 位元碼 (Bytecode)')">1. 產生 .class 位元碼 (Bytecode)</button>
+        <button type="button" class="sort-btn" data-code="2" onclick="addSortItem('Q1', '2', '2. 撰寫 .java 原始碼檔案')">2. 撰寫 .java 原始碼檔案</button>
+        <button type="button" class="sort-btn" data-code="3" onclick="addSortItem('Q1', '3', '3. 交給各作業系統的 JVM 執行')">3. 交給各作業系統的 JVM 執行</button>
+        <button type="button" class="sort-btn" data-code="4" onclick="addSortItem('Q1', '4', '4. 透過 javac 編譯器進行編譯')">4. 透過 javac 編譯器進行編譯</button>
+      </div>
+      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:6px;">✨ 你的排列結果（需選滿 4 項）：</div>
+      <div class="sort-target" id="q1-target"></div>
+      <button type="button" class="reset-btn" onclick="resetSort('Q1')">🔄 重新排列</button>
+    </div>
+
+    <!-- Q2 填空題 -->
+    <div class="question-card" id="card-Q2">
+      <div class="q-header">
+        <span class="q-badge">第 2 題 (Q2)</span>
+        <span class="q-type">🔧 程式卷軸修復題</span>
+      </div>
+      <div class="q-title">帥哥彭老師想要寫一支程式在畫面上印出「大家好，我是帥哥彭老師！」，而且檔名已經命名為 <code>HelloJava.java</code>。請選出正確的語法組合：</div>
+      <pre class="code-block">public class <select id="q2-s1" class="inline-select" onchange="updateComposite('Q2')"><option value="">-- 選擇類別名稱 --</option><option value="A">hellojava</option><option value="B">HelloJava</option><option value="C">HelloJava.java</option></select> {
+    public static void <select id="q2-s2" class="inline-select" onchange="updateComposite('Q2')"><option value="">-- 程式進入點 --</option><option value="1">start</option><option value="2">main</option><option value="3">run</option></select>(String[] args) {
+        <select id="q2-s3" class="inline-select" onchange="updateComposite('Q2')"><option value="">-- 輸出指令 --</option><option value="X">system.out.println</option><option value="Y">System.out.println</option><option value="Z">System.Out.Println</option></select>("大家好，我是帥哥彭老師！");
+    }
+}</pre>
+    </div>
+
+    <!-- Q3 輸出預測 -->
+    <div class="question-card" id="card-Q3">
+      <div class="q-header">
+        <span class="q-badge">第 3 題 (Q3)</span>
+        <span class="q-type">👁️ 終端機預言家</span>
+      </div>
+      <div class="q-title">請問執行下方這段 Java 程式碼後，終端機畫面的輸出結果為何？</div>
+      <pre class="code-block">System.out.print("Java ");
+System.out.println("EZ !");
+System.out.print("我要全部 !");</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q3" value="A" onchange="setAnswer('Q3', 'A')"> <span>A. 第一行顯示 <code>Java EZ !</code>，第二行顯示 <code>我要全部 !</code></span></label>
+        <label class="option-label"><input type="radio" name="Q3" value="B" onchange="setAnswer('Q3', 'B')"> <span>B. 第一行顯示 <code>Java </code>，第二行顯示 <code>EZ !我要全部 !</code></span></label>
+        <label class="option-label"><input type="radio" name="Q3" value="C" onchange="setAnswer('Q3', 'C')"> <span>C. 三段文字分成三行顯示</span></label>
+        <label class="option-label"><input type="radio" name="Q3" value="D" onchange="setAnswer('Q3', 'D')"> <span>D. 全部連在同一行顯示 <code>Java EZ !我要全部 !</code></span></label>
+      </div>
+    </div>
+
+    <!-- Q4 觀念配對 -->
+    <div class="question-card" id="card-Q4">
+      <div class="q-header">
+        <span class="q-badge">第 4 題 (Q4)</span>
+        <span class="q-type">🛡️ 裝備屬性鑑定</span>
+      </div>
+      <div class="q-title">請將下列 Java 的重要名詞與正確的解釋配對起來：</div>
+      <div class="match-row">
+        <div><strong>1. JVM (Java 虛擬機器)</strong></div>
+        <select id="q4-s1" class="inline-select" onchange="updateComposite('Q4')">
+          <option value="">-- 請選擇對應說明 --</option>
+          <option value="A">A. 自動回收不再使用的記憶體</option>
+          <option value="B">B. 變數必須有明確的資料型別</option>
+          <option value="C">C. 真正負責讀取並執行 .class 位元碼</option>
+          <option value="D">D. 包含編譯與執行所需的完整開發工具包</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>2. Garbage Collection (GC)</strong></div>
+        <select id="q4-s2" class="inline-select" onchange="updateComposite('Q4')">
+          <option value="">-- 請選擇對應說明 --</option>
+          <option value="A">A. 自動回收不再使用的記憶體</option>
+          <option value="B">B. 變數必須有明確的資料型別</option>
+          <option value="C">C. 真正負責讀取並執行 .class 位元碼</option>
+          <option value="D">D. 包含編譯與執行所需的完整開發工具包</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>3. 強型別 (Strong Typing)</strong></div>
+        <select id="q4-s3" class="inline-select" onchange="updateComposite('Q4')">
+          <option value="">-- 請選擇對應說明 --</option>
+          <option value="A">A. 自動回收不再使用的記憶體</option>
+          <option value="B">B. 變數必須有明確的資料型別</option>
+          <option value="C">C. 真正負責讀取並執行 .class 位元碼</option>
+          <option value="D">D. 包含編譯與執行所需的完整開發工具包</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ==================== 第二關 ==================== -->
+    <div class="stage-header">
+      <h3>⚔️ 第二關：獵人協會的試煉（變數、輸入、條件與迴圈）</h3>
+      <p>通過試煉條件：活用變數、Scanner、條件分支、三元運算子與迴圈（每題 5 分）</p>
+    </div>
+
+    <!-- Q5 變數與 Scanner -->
+    <div class="question-card" id="card-Q5">
+      <div class="q-header">
+        <span class="q-badge">第 5 題 (Q5)</span>
+        <span class="q-type">🎒 道具欄型別配置</span>
+      </div>
+      <div class="q-title">Vicky 正在建立角色資料，需要宣告「身高 168.5 公分」以及用 <code>Scanner</code> 讀取使用者輸入的「整數年齡」。請選出正確的型別與方法：</div>
+      <pre class="code-block">Scanner scanner = new Scanner(System.in);
+<select id="q5-s1" class="inline-select" onchange="updateComposite('Q5')"><option value="">-- 選擇型別 --</option><option value="int">int</option><option value="double">double</option><option value="boolean">boolean</option><option value="String">String</option></select> height = 168.5;
+int age = scanner.<select id="q5-s2" class="inline-select" onchange="updateComposite('Q5')"><option value="">-- 讀取整數方法 --</option><option value="nextInt()">nextInt()</option><option value="nextDouble()">nextDouble()</option><option value="nextLine()">nextLine()</option></select>;</pre>
+    </div>
+
+    <!-- Q6 獵人等級判斷 -->
+    <div class="question-card" id="card-Q6">
+      <div class="q-header">
+        <span class="q-badge">第 6 題 (Q6)</span>
+        <span class="q-type">🏹 獵人協會 DPS 測定</span>
+      </div>
+      <div class="q-title">獵人協會使用以下程式測定獵人等級。若某位考生的每秒傷害 <code>DPS = 80</code>，請問執行後會輸出什麼結果？</div>
+      <pre class="code-block">int DPS = 80;
+if (DPS >= 90) {
+    System.out.println("S級獵人");
+} else if (DPS >= 80) {
+    System.out.println("A級獵人");
+} else if (DPS >= 70) {
+    System.out.println("B級獵人");
+} else {
+    System.out.println("東巴");
+}</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q6" value="A" onchange="setAnswer('Q6', 'A')"> <span>A. 只輸出「A級獵人」</span></label>
+        <label class="option-label"><input type="radio" name="Q6" value="B" onchange="setAnswer('Q6', 'B')"> <span>B. 輸出「A級獵人」與「B級獵人」</span></label>
+        <label class="option-label"><input type="radio" name="Q6" value="C" onchange="setAnswer('Q6', 'C')"> <span>C. 只輸出「B級獵人」</span></label>
+        <label class="option-label"><input type="radio" name="Q6" value="D" onchange="setAnswer('Q6', 'D')"> <span>D. 輸出「S級獵人」</span></label>
+      </div>
+    </div>
+
+    <!-- Q7 三元運算子：咒術迴戰 -->
+    <div class="question-card" id="card-Q7">
+      <div class="q-header">
+        <span class="q-badge">第 7 題 (Q7)</span>
+        <span class="q-type">🤞 領域展開・三元術式</span>
+      </div>
+      <div class="q-title">當咒力（<code>cursedEnergy</code>）大於或等於 90 時施展 <code>"無量空處"</code>，否則施展 <code>"龜派氣功"</code>。請完成下方的三元運算子：</div>
+      <pre class="code-block">int cursedEnergy = 95;
+String skill = (cursedEnergy >= 90) <select id="q7-s1" class="inline-select" onchange="updateComposite('Q7')"><option value="">-- 符號 1 --</option><option value="?">?</option><option value=":">:</option><option value="==">==</option></select> "無量空處" <select id="q7-s2" class="inline-select" onchange="updateComposite('Q7')"><option value="">-- 符號 2 --</option><option value="?">?</option><option value=":">:</option><option value=";">;</option></select> "龜派氣功";</pre>
+    </div>
+
+    <!-- Q8 switch 陷阱：吉伊卡哇 -->
+    <div class="question-card" id="card-Q8">
+      <div class="q-header">
+        <span class="q-badge">第 8 題 (Q8)</span>
+        <span class="q-type">🐾 吉伊卡哇召喚陣（注意陷阱！）</span>
+      </div>
+      <div class="q-title">請仔細觀察下方的 <code>switch</code> 程式碼（注意 <code>break</code> 的位置！）。當 <code>choice = 1</code> 時，畫面會輸出什麼？</div>
+      <pre class="code-block">int choice = 1;
+switch (choice) {
+    case 1:
+        System.out.print("吉依 ");
+    case 2:
+        System.out.print("小巴 ");
+        break;
+    case 3:
+        System.out.print("烏薩奇 ");
+        break;
+}</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q8" value="A" onchange="setAnswer('Q8', 'A')"> <span>A. <code>吉依 </code></span></label>
+        <label class="option-label"><input type="radio" name="Q8" value="B" onchange="setAnswer('Q8', 'B')"> <span>B. <code>吉依 小巴 </code></span></label>
+        <label class="option-label"><input type="radio" name="Q8" value="C" onchange="setAnswer('Q8', 'C')"> <span>C. <code>吉依 小巴 烏薩奇 </code></span></label>
+        <label class="option-label"><input type="radio" name="Q8" value="D" onchange="setAnswer('Q8', 'D')"> <span>D. 編譯錯誤，因為 case 1 少了 break</span></label>
+      </div>
+    </div>
+
+    <!-- Q9 迴圈比較與計數 -->
+    <div class="question-card" id="card-Q9">
+      <div class="q-header">
+        <span class="q-badge">第 9 題 (Q9)</span>
+        <span class="q-type">🔁 時間迴廊試煉</span>
+      </div>
+      <div class="q-title">閱讀下方兩段迴圈程式，請問最後輸出的 <code>sum</code> 與 <code>doCount</code> 數值分別是多少？</div>
+      <pre class="code-block">// 第一段：for 迴圈
+int sum = 0;
+for (int i = 1; i < 5; i++) {
+    sum += i;
+}
+
+// 第二段：do-while 迴圈
+int x = 10;
+int doCount = 0;
+do {
+    doCount++;
+} while (x < 5);</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q9" value="A" onchange="setAnswer('Q9', 'A')"> <span>A. <code>sum = 15</code>，<code>doCount = 0</code></span></label>
+        <label class="option-label"><input type="radio" name="Q9" value="B" onchange="setAnswer('Q9', 'B')"> <span>B. <code>sum = 10</code>，<code>doCount = 1</code></span></label>
+        <label class="option-label"><input type="radio" name="Q9" value="C" onchange="setAnswer('Q9', 'C')"> <span>C. <code>sum = 10</code>，<code>doCount = 0</code></span></label>
+        <label class="option-label"><input type="radio" name="Q9" value="D" onchange="setAnswer('Q9', 'D')"> <span>D. <code>sum = 15</code>，<code>doCount = 1</code></span></label>
+      </div>
+    </div>
+
+    <!-- ==================== 第三關 ==================== -->
+    <div class="stage-header">
+      <h3>📦 第三關：皇家寶庫的密碼（陣列宣告、初始化與操作）</h3>
+      <p>通過試煉條件：熟悉陣列索引、預設值、length 走訪與統計邏輯（每題 5 分）</p>
+    </div>
+
+    <!-- Q10 陣列置物櫃視覺題 -->
+    <div class="question-card" id="card-Q10">
+      <div class="q-header">
+        <span class="q-badge">第 10 題 (Q10)</span>
+        <span class="q-type">🗄️ 寶庫置物櫃解碼</span>
+      </div>
+      <div class="q-title">下方是剛初始化完成的 <code>int[] scores = {80, 65, 90, 72, 88};</code> 寶庫置物櫃。若執行 <code>scores[1] = scores[3] + 10;</code> 後，請問：</div>
+      <div class="locker-row">
+        <div class="locker"><div class="locker-index">索引 [0]</div><div class="locker-val">80</div></div>
+        <div class="locker"><div class="locker-index">索引 [1]</div><div class="locker-val">65</div></div>
+        <div class="locker"><div class="locker-index">索引 [2]</div><div class="locker-val">90</div></div>
+        <div class="locker"><div class="locker-index">索引 [3]</div><div class="locker-val">72</div></div>
+        <div class="locker"><div class="locker-index">索引 [4]</div><div class="locker-val">88</div></div>
+      </div>
+      <div class="match-row">
+        <div><strong>1. 這個陣列的 <code>scores.length</code> 是多少？</strong></div>
+        <select id="q10-s1" class="inline-select" onchange="updateComposite('Q10')">
+          <option value="">-- 選擇 length --</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>2. 最後一個元素的合法索引是多少？</strong></div>
+        <select id="q10-s2" class="inline-select" onchange="updateComposite('Q10')">
+          <option value="">-- 選擇最後索引 --</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="88">88</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>3. 執行賦值後，<code>scores[1]</code> 的新值變成多少？</strong></div>
+        <select id="q10-s3" class="inline-select" onchange="updateComposite('Q10')">
+          <option value="">-- 選擇 scores[1] 新值 --</option>
+          <option value="75">75</option>
+          <option value="82">82</option>
+          <option value="90">90</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Q11 陣列預設值 -->
+    <div class="question-card" id="card-Q11">
+      <div class="q-header">
+        <span class="q-badge">第 11 題 (Q11)</span>
+        <span class="q-type">🔮 初始魔力偵測</span>
+      </div>
+      <div class="q-title">當我們使用 <code>new</code> 建立陣列但還沒有手動賦值時，Java 會自動給予預設值。請問下列哪一個陣列的預設值配對是<strong>完全正確</strong>的？</div>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q11" value="A" onchange="setAnswer('Q11', 'A')"> <span>A. <code>int[]</code> 預設為 <code>0</code>、<code>boolean[]</code> 預設為 <code>false</code>、<code>String[]</code> 預設為 <code>null</code></span></label>
+        <label class="option-label"><input type="radio" name="Q11" value="B" onchange="setAnswer('Q11', 'B')"> <span>B. <code>int[]</code> 預設為 <code>1</code>、<code>boolean[]</code> 預設為 <code>true</code>、<code>String[]</code> 預設為 <code>""</code></span></label>
+        <label class="option-label"><input type="radio" name="Q11" value="C" onchange="setAnswer('Q11', 'C')"> <span>C. <code>int[]</code> 預設為 <code>null</code>、<code>double[]</code> 預設為 <code>0.0</code>、<code>boolean[]</code> 預設為 <code>0</code></span></label>
+        <label class="option-label"><input type="radio" name="Q11" value="D" onchange="setAnswer('Q11', 'D')"> <span>D. 所有陣列在還沒賦值前，預設值通通都是 <code>0</code></span></label>
+      </div>
+    </div>
+
+    <!-- Q12 尋找最大值與走訪 -->
+    <div class="question-card" id="card-Q12">
+      <div class="q-header">
+        <span class="q-badge">第 12 題 (Q12)</span>
+        <span class="q-type">🏆 尋找最強戰力</span>
+      </div>
+      <div class="q-title">下方程式要找出陣列中的最高分（最大值），請填入正確的初始值、迴圈終止條件與比較符號：</div>
+      <pre class="code-block">int[] scores = {80, 65, 90, 72, 88};
+int max = <select id="q12-s1" class="inline-select" onchange="updateComposite('Q12')"><option value="">-- 初始值 --</option><option value="scores[0]">scores[0]</option><option value="scores.length">scores.length</option><option value="100">100</option></select>;
+
+for (int i = 1; <select id="q12-s2" class="inline-select" onchange="updateComposite('Q12')"><option value="">-- 迴圈條件 --</option><option value="i <= scores.length">i &lt;= scores.length</option><option value="i < scores.length">i &lt; scores.length</option><option value="i == scores.length">i == scores.length</option></select>; i++) {
+    if (scores[i] <select id="q12-s3" class="inline-select" onchange="updateComposite('Q12')"><option value="">-- 比較 --</option><option value=">">&gt; max</option><option value="<">&lt; max</option><option value="==">== max</option></select>) {
+        max = scores[i];
+    }
+}</pre>
+    </div>
+
+    <!-- ==================== 第四關 ==================== -->
+    <div class="stage-header">
+      <h3>🧩 第四關：模組化工坊（方法、參數、回傳值、內聚與遞迴）</h3>
+      <p>通過試煉條件：掌握方法定義與呼叫、高內聚低耦合原則與簡單遞迴（每題 5 分）</p>
+    </div>
+
+    <!-- Q13 方法定義與回傳 -->
+    <div class="question-card" id="card-Q13">
+      <div class="q-header">
+        <span class="q-badge">第 13 題 (Q13)</span>
+        <span class="q-type">⚙️ 鍛造自動計算機</span>
+      </div>
+      <div class="q-title">我們想建立一個方法 <code>calculateSubtotal</code>，接收「單價」與「數量」兩個整數，並將相乘後的整數小計<strong>回傳</strong>給呼叫端。請完成方法定義：</div>
+      <pre class="code-block">static <select id="q13-s1" class="inline-select" onchange="updateComposite('Q13')"><option value="">-- 回傳型別 --</option><option value="void">void</option><option value="int">int</option><option value="String">String</option></select> calculateSubtotal(<select id="q13-s2" class="inline-select" onchange="updateComposite('Q13')"><option value="">-- 參數宣告 --</option><option value="price, quantity">price, quantity</option><option value="int price, int quantity">int price, int quantity</option><option value="int price; int quantity">int price; int quantity</option></select>) {
+    <select id="q13-s3" class="inline-select" onchange="updateComposite('Q13')"><option value="">-- 回傳關鍵字 --</option><option value="return">return</option><option value="print">print</option><option value="break">break</option></select> price * quantity;
+}</pre>
+    </div>
+
+    <!-- Q14 參數順序與呼叫除錯 -->
+    <div class="question-card" id="card-Q14">
+      <div class="q-header">
+        <span class="q-badge">第 14 題 (Q14)</span>
+        <span class="q-type">🐞 抓出工坊裡的 Bug</span>
+      </div>
+      <div class="q-title">若類別中定義了方法 <code>static void showStudent(String name, int score)</code>，且我們在 <code>main</code> 方法中想要呼叫它，下列哪一種寫法是<strong>完全正確</strong>的？</div>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q14" value="A" onchange="setAnswer('Q14', 'A')"> <span>A. 在 <code>main</code> 裡面寫 <code>showStudent(90, "Amy");</code></span></label>
+        <label class="option-label"><input type="radio" name="Q14" value="B" onchange="setAnswer('Q14', 'B')"> <span>B. 在 <code>main</code> 裡面寫 <code>showStudent("Amy", 90);</code></span></label>
+        <label class="option-label"><input type="radio" name="Q14" value="C" onchange="setAnswer('Q14', 'C')"> <span>C. 在 <code>main</code> 裡面寫 <code>showStudent(String "Amy", int 90);</code></span></label>
+        <label class="option-label"><input type="radio" name="Q14" value="D" onchange="setAnswer('Q14', 'D')"> <span>D. 直接把整個 <code>static void showStudent(...) { ... }</code> 塞進 <code>main</code> 的大括號裡面定義</span></label>
+      </div>
+    </div>
+
+    <!-- Q15 高內聚低耦合 -->
+    <div class="question-card" id="card-Q15">
+      <div class="q-header">
+        <span class="q-badge">第 15 題 (Q15)</span>
+        <span class="q-type">🏛️ 大師級架構評鑑（內聚與耦合）</span>
+      </div>
+      <div class="q-title">在設計方法時，我們常追求「高內聚、低耦合」。關於這兩個概念，下列哪一個設計做法最符合<strong>「高內聚、低耦合」</strong>的精神？</div>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q15" value="A" onchange="setAnswer('Q15', 'A')"> <span>A. 寫一個 <code>doEverything()</code> 方法，同時計算商品金額、判斷學生成績又印出分隔線</span></label>
+        <label class="option-label"><input type="radio" name="Q15" value="B" onchange="setAnswer('Q15', 'B')"> <span>B. <code>getGrade(int score)</code> 只專心負責判斷一個分數的等第，且只接收真正需要的 <code>score</code> 參數，而不傳入整個陣列與無關的登入狀態</span></label>
+        <label class="option-label"><input type="radio" name="Q15" value="C" onchange="setAnswer('Q15', 'C')"> <span>C. 每個方法都強制傳入 10 個以上的參數，確保方法知道系統裡的所有細節</span></label>
+        <label class="option-label"><input type="radio" name="Q15" value="D" onchange="setAnswer('Q15', 'D')"> <span>D. 為了降低耦合，規定所有方法完全不能有參數，也不能有回傳值</span></label>
+      </div>
+    </div>
+
+    <!-- Q16 遞迴補充題 -->
+    <div class="question-card" id="card-Q16">
+      <div class="q-header">
+        <span class="q-badge">第 16 題 (Q16)</span>
+        <span class="q-type">🪞 無限鏡像迷宮（遞迴）</span>
+      </div>
+      <div class="q-title">觀察下方的遞迴方法 <code>sum(int n)</code>。請問呼叫 <code>sum(4)</code> 的回傳值是多少？如果把 <code>if (n == 1) return 1;</code> 這段 Base Case 刪掉，執行時最可能發生什麼錯誤？</div>
+      <pre class="code-block">static int sum(int n) {
+    if (n == 1) {
+        return 1; // Base Case
+    }
+    return n + sum(n - 1);
+}</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q16" value="A" onchange="setAnswer('Q16', 'A')"> <span>A. 回傳值為 <code>10</code>；若刪掉停止條件會發生 <code>StackOverflowError</code></span></label>
+        <label class="option-label"><input type="radio" name="Q16" value="B" onchange="setAnswer('Q16', 'B')"> <span>B. 回傳值為 <code>24</code>；若刪掉停止條件會發生 <code>ArrayIndexOutOfBoundsException</code></span></label>
+        <label class="option-label"><input type="radio" name="Q16" value="C" onchange="setAnswer('Q16', 'C')"> <span>C. 回傳值為 <code>10</code>；若刪掉停止條件 Java 會自動在 <code>n == 0</code> 時停下來</span></label>
+        <label class="option-label"><input type="radio" name="Q16" value="D" onchange="setAnswer('Q16', 'D')"> <span>D. 回傳值為 <code>4</code>；若刪掉停止條件會發生 <code>ArithmeticException</code></span></label>
+      </div>
+    </div>
+
+    <!-- ==================== 第五關 ==================== -->
+    <div class="stage-header">
+      <h3>🛡️ 第五關：異常結界防衛戰（例外處理 Exception）</h3>
+      <p>通過試煉條件：辨識常見 Exception、掌握 try-catch-finally 與 throw / throws（每題 5 分）</p>
+    </div>
+
+    <!-- Q17 例外怪獸圖鑑配對 -->
+    <div class="question-card" id="card-Q17">
+      <div class="q-header">
+        <span class="q-badge">第 17 題 (Q17)</span>
+        <span class="q-type">👾 異常怪獸圖鑑配對</span>
+      </div>
+      <div class="q-title">地下城出現了四隻異常怪獸！請根據下方的程式碼災難現場，配對正確的 Exception 型別：</div>
+      <div class="match-row">
+        <div><strong>1. <code>int a = 10 / 0;</code>（整數除以 0）</strong></div>
+        <select id="q17-s1" class="inline-select" onchange="updateComposite('Q17')">
+          <option value="">-- 選擇例外型別 --</option>
+          <option value="A">A. ArithmeticException</option>
+          <option value="B">B. NumberFormatException</option>
+          <option value="C">C. ArrayIndexOutOfBoundsException</option>
+          <option value="D">D. NullPointerException</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>2. <code>int n = Integer.parseInt("18歲");</code>（文字轉數字失敗）</strong></div>
+        <select id="q17-s2" class="inline-select" onchange="updateComposite('Q17')">
+          <option value="">-- 選擇例外型別 --</option>
+          <option value="A">A. ArithmeticException</option>
+          <option value="B">B. NumberFormatException</option>
+          <option value="C">C. ArrayIndexOutOfBoundsException</option>
+          <option value="D">D. NullPointerException</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>3. <code>int[] arr = new int[3]; System.out.println(arr[5]);</code></strong></div>
+        <select id="q17-s3" class="inline-select" onchange="updateComposite('Q17')">
+          <option value="">-- 選擇例外型別 --</option>
+          <option value="A">A. ArithmeticException</option>
+          <option value="B">B. NumberFormatException</option>
+          <option value="C">C. ArrayIndexOutOfBoundsException</option>
+          <option value="D">D. NullPointerException</option>
+        </select>
+      </div>
+      <div class="match-row">
+        <div><strong>4. <code>String s = null; System.out.println(s.length());</code></strong></div>
+        <select id="q17-s4" class="inline-select" onchange="updateComposite('Q17')">
+          <option value="">-- 選擇例外型別 --</option>
+          <option value="A">A. ArithmeticException</option>
+          <option value="B">B. NumberFormatException</option>
+          <option value="C">C. ArrayIndexOutOfBoundsException</option>
+          <option value="D">D. NullPointerException</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Q18 try-catch-finally 流程追蹤 -->
+    <div class="question-card" id="card-Q18">
+      <div class="q-header">
+        <span class="q-badge">第 18 題 (Q18)</span>
+        <span class="q-type">⚡ 結界發動順序追蹤</span>
+      </div>
+      <div class="q-title">請追蹤下方 <code>try / catch / finally</code> 程式的執行流程，選出畫面上依序印出的文字：</div>
+      <pre class="code-block">try {
+    System.out.print("1 ");
+    int x = 10 / 0;
+    System.out.print("2 ");
+} catch (ArithmeticException e) {
+    System.out.print("3 ");
+} finally {
+    System.out.print("4 ");
+}
+System.out.print("5");</pre>
+      <div class="options-grid">
+        <label class="option-label"><input type="radio" name="Q18" value="A" onchange="setAnswer('Q18', 'A')"> <span>A. <code>1 2 3 4 5</code></span></label>
+        <label class="option-label"><input type="radio" name="Q18" value="B" onchange="setAnswer('Q18', 'B')"> <span>B. <code>1 3 4 5</code></span></label>
+        <label class="option-label"><input type="radio" name="Q18" value="C" onchange="setAnswer('Q18', 'C')"> <span>C. <code>1 3 5</code>（因為發生例外，finally 不會執行）</span></label>
+        <label class="option-label"><input type="radio" name="Q18" value="D" onchange="setAnswer('Q18', 'D')"> <span>D. <code>1 4</code>（程式在 finally 後直接崩潰中斷）</span></label>
+      </div>
+    </div>
+
+    <!-- Q19 Scanner + try/catch 重新輸入 -->
+    <div class="question-card" id="card-Q19">
+      <div class="q-header">
+        <span class="q-badge">第 19 題 (Q19)</span>
+        <span class="q-type">🧹 清除鍵盤緩衝區的詛咒</span>
+      </div>
+      <div class="q-title">當我們使用 <code>while</code> 迴圈搭配 <code>try / catch</code> 讓使用者重新輸入整數時，如果使用者調皮輸入了 <code>"ABC"</code>，為了避免錯誤內容一直留在 <code>Scanner</code> 造成無限失敗迴圈，我們應該捕捉哪一個例外，並在 <code>catch</code> 中加上哪一行指令？</div>
+      <pre class="code-block">while (!success) {
+    try {
+        System.out.print("請輸入年齡：");
+        age = scanner.nextInt();
+        success = true;
+    } catch (<select id="q19-s1" class="inline-select" onchange="updateComposite('Q19')"><option value="">-- 捕捉例外型別 --</option><option value="InputMismatchException">InputMismatchException</option><option value="ArithmeticException">ArithmeticException</option><option value="NullPointerException">NullPointerException</option></select> e) {
+        System.out.println("輸入錯誤，請輸入整數！");
+        <select id="q19-s2" class="inline-select" onchange="updateComposite('Q19')"><option value="">-- 清除錯誤輸入 --</option><option value="scanner.nextLine();">scanner.nextLine();</option><option value="scanner.nextInt();">scanner.nextInt();</option><option value="age = 0;">age = 0;</option></select>
+    }
+}</pre>
+    </div>
+
+    <!-- Q20 throw vs throws 與設計原則 -->
+    <div class="question-card" id="card-Q20">
+      <div class="q-header">
+        <span class="q-badge">第 20 題 (Q20)</span>
+        <span class="q-type">👑 最終魔王：主動防禦術式</span>
+      </div>
+      <div class="q-title">在銀行提款方法中，若傳入的提款金額 <code>amount &lt;= 0</code>，我們希望在方法宣告上標示可能拋出例外，並在程式中主動拋出「不合法引數例外」。請完成下方程式碼：</div>
+      <pre class="code-block">static void withdraw(int amount) <select id="q20-s1" class="inline-select" onchange="updateComposite('Q20')"><option value="">-- 方法宣告標示 --</option><option value="throws">throws</option><option value="throw">throw</option><option value="catch">catch</option></select> IllegalArgumentException {
+    if (amount <= 0) {
+        <select id="q20-s2" class="inline-select" onchange="updateComposite('Q20')"><option value="">-- 主動拋出動作 --</option><option value="throw new">throw new</option><option value="throws new">throws new</option><option value="return new">return new</option></select> IllegalArgumentException("提款金額必須大於 0");
+    }
+    System.out.println("提款成功：" + amount);
+}</pre>
+    </div>
+
+    <!-- 交卷與匯出區 -->
+    <div class="submit-section">
+      <h2>🎓 完成試煉！匯出你的勇者答案卷</h2>
+      <p style="color: var(--text-muted); margin: 10px 0 20px;">
+        請確認上方 20 道題目皆已完成，點擊下方按鈕下載 <code>.json</code> 答案檔，並上傳至學校作業系統！
+      </p>
+      <button type="button" class="btn-export" onclick="exportStudentAnswers()">📥 下載答案檔 (.json)</button>
+      <button type="button" class="reset-btn" style="padding:14px 20px; font-size:1rem;" onclick="togglePreview()">🔍 預覽 / 複製 JSON 內容</button>
+
+      <div class="preview-box" id="previewBox">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">若瀏覽器阻擋下載，可複製下方全部內容貼成文字檔繳交：</p>
+        <textarea id="jsonPreview" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 儲存學生所有題目的標準化答案 (Q1 ~ Q20)
+    const totalQuestions = 20;
+    const answers = {};
+    for (let i = 1; i <= totalQuestions; i++) {
+      answers['Q' + i] = "";
+    }
+
+    // Q1 排序題暫存陣列
+    let q1SortList = [];
+
+    // 單選題設定答案
+    function setAnswer(qId, val) {
+      answers[qId] = val;
+      updateUI(qId);
+      saveProgress();
+    }
+
+    // 排序題新增項目
+    function addSortItem(qId, code, labelText) {
+      if (q1SortList.some(item => item.code === code)) return;
+      q1SortList.push({ code, labelText });
+      renderSortQ1();
+    }
+
+    function resetSort(qId) {
+      q1SortList = [];
+      renderSortQ1();
+    }
+
+    function renderSortQ1() {
+      const targetEl = document.getElementById('q1-target');
+      const poolBtns = document.querySelectorAll('#q1-pool .sort-btn');
+
+      poolBtns.forEach(btn => {
+        const code = btn.getAttribute('data-code');
+        const used = q1SortList.some(i => i.code === code);
+        btn.style.opacity = used ? '0.3' : '1';
+        btn.style.pointerEvents = used ? 'none' : 'auto';
+      });
+
+      targetEl.innerHTML = q1SortList.map((item, idx) =>
+        `<span style="background:#0284c7; color:white; padding:6px 12px; border-radius:6px; font-size:0.9rem;">
+          Step ${idx + 1}:${item.labelText}
+        </span>`
+      ).join(' ➡️ ');
+
+      if (q1SortList.length === 4) {
+        answers['Q1'] = q1SortList.map(i => i.code).join('-');
+      } else {
+        answers['Q1'] = "";
+      }
+      updateUI('Q1');
+      saveProgress();
+    }
+
+    // 複合下拉選單題統一組合代碼
+    function updateComposite(qId) {
+      const config = {
+        'Q2': ['q2-s1', 'q2-s2', 'q2-s3'],
+        'Q4': ['q4-s1', 'q4-s2', 'q4-s3'],
+        'Q5': ['q5-s1', 'q5-s2'],
+        'Q7': ['q7-s1', 'q7-s2'],
+        'Q10': ['q10-s1', 'q10-s2', 'q10-s3'],
+        'Q12': ['q12-s1', 'q12-s2', 'q12-s3'],
+        'Q13': ['q13-s1', 'q13-s2', 'q13-s3'],
+        'Q17': ['q17-s1', 'q17-s2', 'q17-s3', 'q17-s4'],
+        'Q19': ['q19-s1', 'q19-s2'],
+        'Q20': ['q20-s1', 'q20-s2']
+      };
+
+      const ids = config[qId];
+      const vals = ids.map(id => document.getElementById(id).value);
+
+      if (vals.every(v => v !== "")) {
+        answers[qId] = vals.join('-');
+      } else {
+        answers[qId] = "";
+      }
+      updateUI(qId);
+      saveProgress();
+    }
+
+    // 更新卡片外框與頂部進度條
+    function updateUI(qId) {
+      const card = document.getElementById('card-' + qId);
+      if (card) {
+        if (answers[qId] !== "") {
+          card.classList.add('answered');
+        } else {
+          card.classList.remove('answered');
+        }
+      }
+
+      const answeredCount = Object.values(answers).filter(v => v !== "").length;
+      const pct = Math.round((answeredCount / totalQuestions) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `完成度 ${answeredCount} / ${totalQuestions} (${pct}%)`;
+
+      updateJsonPreview();
+    }
+
+    // 產生標準化 JSON 物件
+    function buildPayload() {
+      return {
+        examTitle: "Java 期中地下城試煉",
+        examVersion: "2026-Midterm-v1",
+        submittedAt: new Date().toLocaleString('zh-TW', { hour12: false }),
+        studentInfo: {
+          studentId: document.getElementById('studentId').value.trim(),
+          name: document.getElementById('studentName').value.trim(),
+          className: document.getElementById('studentClass').value.trim()
+        },
+        answers: { ...answers }
+      };
+    }
+
+    function updateJsonPreview() {
+      const box = document.getElementById('jsonPreview');
+      if (box) {
+        box.value = JSON.stringify(buildPayload(), null, 2);
+      }
+    }
+
+    function togglePreview() {
+      const previewBox = document.getElementById('previewBox');
+      updateJsonPreview();
+      previewBox.style.display = previewBox.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 匯出 JSON 檔案
+    function exportStudentAnswers() {
+      const sid = document.getElementById('studentId').value.trim();
+      const sname = document.getElementById('studentName').value.trim();
+
+      if (!sid || !sname) {
+        alert('⚠️ 請先在最上方填寫「學號」與「姓名」才能匯出答案卷喔！');
+        document.getElementById('studentId').focus();
+        return;
+      }
+
+      const unanswered = Object.keys(answers).filter(k => answers[k] === "");
+      if (unanswered.length > 0) {
+        const confirmSubmit = confirm(`⚠️ 你還有 ${unanswered.length} 題尚未完成（${unanswered.join(', ')}）！\n確定要現在匯出答案檔嗎？`);
+        if (!confirmSubmit) return;
+      }
+
+      const payload = buildPayload();
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sid}_${sname}_Java期中考.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // LocalStorage 自動暫存，避免學生誤關網頁
+    function saveProgress() {
+      const data = {
+        studentId: document.getElementById('studentId').value,
+        studentName: document.getElementById('studentName').value,
+        studentClass: document.getElementById('studentClass').value,
+        answers
+      };
+      localStorage.setItem('java_midterm_save_v1', JSON.stringify(data));
+    }
+  </script>
+</body>
+</html>
